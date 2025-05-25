@@ -5,13 +5,19 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+$error = '';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $title = $_POST['title'];
-    $content = $_POST['content'];
-    $stmt = $conn->prepare("INSERT INTO posts (title, content) VALUES (?, ?)");
-    $stmt->bind_param("ss", $title, $content);
-    $stmt->execute();
-    header("Location: index.php");
+    $title = trim($_POST['title']);
+    $content = trim($_POST['content']);
+
+    if (strlen($title) < 3 || strlen($content) < 10) {
+        $error = "Title must be at least 3 characters and content at least 10 characters.";
+    } else {
+        $stmt = $conn->prepare("INSERT INTO posts (title, content, created_at) VALUES (?, ?, NOW())");
+        $stmt->bind_param("ss", $title, $content);
+        $stmt->execute();
+        header("Location: index.php");
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -22,18 +28,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body class="bg-light">
 <div class="container mt-5">
-    <h2>Create New Post</h2>
-    <form method="POST" class="mt-3">
+    <h2>Create Post</h2>
+    <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
+    <form method="POST" class="mt-3" novalidate>
         <div class="mb-3">
             <label class="form-label">Title:</label>
-            <input type="text" name="title" class="form-control" required>
+            <input type="text" name="title" class="form-control" required minlength="3">
         </div>
         <div class="mb-3">
             <label class="form-label">Content:</label>
-            <textarea name="content" class="form-control" required></textarea>
+            <textarea name="content" class="form-control" required minlength="10"></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Create</button>
-        <a href="index.php" class="btn btn-secondary">Back</a>
+        <button type="submit" class="btn btn-success">Create</button>
+        <a href="index.php" class="btn btn-link">Back</a>
     </form>
 </div>
 </body>
